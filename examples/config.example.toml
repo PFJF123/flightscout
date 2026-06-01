@@ -1,0 +1,60 @@
+# flightscout configuration example.
+#
+# Copy to one of these locations (first match wins):
+#   1. the path in $FLIGHTSCOUT_CONFIG
+#   2. ./flightscout.toml
+#   3. ~/.config/flightscout/config.toml
+#
+# Every [notifiers.*] block below is optional. Enable only the ones you want;
+# `flightscout watch check --notify` fans an alert out to all configured notifiers.
+#
+# Data dir: watch definitions and fired-state live under $FLIGHTSCOUT_HOME
+# (defaults to ~/.flightscout). Set it to keep independent state per machine.
+
+# [notifiers.console] is the zero-config default and needs no block: with no
+# config file at all, alerts print to stdout. Listed here only for clarity.
+[notifiers.console]
+# (no options)
+
+[notifiers.email]
+host = "smtp.example.com"          # SMTP server hostname (required)
+port = 587                         # SMTP port (STARTTLS)
+username = "you@example.com"       # SMTP auth user (optional if server allows)
+password = "app-password"          # SMTP auth password
+from_addr = "you@example.com"      # From: header (defaults to username)
+to_addr = "you@example.com"        # where the alert is delivered (required)
+use_tls = true                     # STARTTLS before login
+
+[notifiers.telegram]
+token = "123456:ABC-your-bot-token"  # Telegram Bot API token (required)
+chat_id = "987654321"                # target chat id (required)
+
+[notifiers.discord]
+webhook_url = "https://discord.com/api/webhooks/XXXX/YYYY"  # channel webhook (required)
+
+[notifiers.ntfy]
+topic = "my-flightscout-alerts"    # ntfy topic name (required)
+server = "https://ntfy.sh"         # ntfy server (defaults to https://ntfy.sh)
+# priority = 4                     # optional ntfy priority 1-5
+# click = "https://flights.google.com"  # optional click-through URL
+
+[notifiers.webhook]
+url = "https://example.com/hooks/flightscout"  # POST target (required)
+# method = "POST"                  # HTTP method (default POST)
+# headers = { Authorization = "Bearer token" }  # extra headers
+
+# ---------------------------------------------------------------------------
+# Environment-variable equivalents (override file values; handy for 12-factor
+# deploys where you do not want a config file):
+#
+#   ntfy:      FLIGHTSCOUT_NTFY_TOPIC, FLIGHTSCOUT_NTFY_SERVER
+#   telegram:  FLIGHTSCOUT_TELEGRAM_TOKEN, FLIGHTSCOUT_TELEGRAM_CHAT_ID
+#   discord:   FLIGHTSCOUT_DISCORD_WEBHOOK
+#   webhook:   FLIGHTSCOUT_WEBHOOK_URL
+#   email:     FLIGHTSCOUT_SMTP_HOST, FLIGHTSCOUT_SMTP_PORT,
+#              FLIGHTSCOUT_SMTP_USER, FLIGHTSCOUT_SMTP_PASS,
+#              FLIGHTSCOUT_SMTP_FROM, FLIGHTSCOUT_SMTP_TO
+#
+#   data dir:  FLIGHTSCOUT_HOME (defaults to ~/.flightscout)
+#   config:    FLIGHTSCOUT_CONFIG (explicit path to this file)
+# ---------------------------------------------------------------------------

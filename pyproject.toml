@@ -1,0 +1,51 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "flightscout"
+version = "0.1.0"
+description = "Research flights and know when to book: booking-frontier ETAs, reliable fare watches, and an agent-native MCP server, on top of Google Flights data."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Justin Feldstein" }]
+keywords = ["flights", "travel", "google-flights", "fare-watch", "mcp", "fli"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Internet",
+    "Topic :: Utilities",
+]
+dependencies = ["flights>=0.9,<1.0"]
+
+[project.optional-dependencies]
+cli = ["typer>=0.12", "rich>=13"]
+mcp = ["mcp>=1.2"]
+all = ["flightscout[cli,mcp]"]
+dev = ["pytest>=8", "ruff"]
+
+[project.scripts]
+flightscout = "flightscout.cli:app"
+flightscout-mcp = "flightscout.mcp_server:main"
+
+[project.urls]
+Homepage = "https://github.com/PFJF123/flightscout"
+Repository = "https://github.com/PFJF123/flightscout"
+
+[tool.hatch.build.targets.wheel]
+packages = ["flightscout"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/flightscout",
+    "/README.md",
+    "/LICENSE",
+    "/CHANGELOG.md",
+]
