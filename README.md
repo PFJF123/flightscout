@@ -4,6 +4,8 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
+![flightscout demo](demo.gif)
+
 ## Why flightscout
 
 Raw `fli` already searches Google Flights well. flightscout adds the three things you actually reach for when planning a trip:
@@ -17,9 +19,8 @@ Cash fares only. No award or points availability.
 ## Install
 
 ```bash
-pip install flightscout              # library + MCP-free core
-pip install "flightscout[cli]"       # adds the `flightscout` CLI (typer + rich)
-pip install "flightscout[mcp]"       # adds the `flightscout-mcp` server
+pip install flightscout              # the `flightscout` CLI (typer + rich included)
+pip install "flightscout[mcp]"       # also installs the `flightscout-mcp` server
 pip install "flightscout[all]"       # everything
 ```
 
