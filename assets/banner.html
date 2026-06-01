@@ -1,0 +1,88 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1280px; height: 640px; overflow: hidden; }
+  body {
+    font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+    background:
+      radial-gradient(1200px 700px at 78% -10%, #44475a55 0%, transparent 60%),
+      radial-gradient(900px 600px at 8% 120%, #bd93f933 0%, transparent 55%),
+      #1e1f2b;
+    color: #f8f8f2;
+    position: relative;
+  }
+  /* faint dotted grid */
+  .grid {
+    position: absolute; inset: 0;
+    background-image: radial-gradient(#6272a422 1px, transparent 1px);
+    background-size: 26px 26px;
+    mask-image: linear-gradient(180deg, #000, transparent 85%);
+  }
+  .stars b { position: absolute; color: #f1fa8c; opacity: .8; font-size: 18px; }
+
+  .wrap { position: absolute; inset: 0; padding: 70px 64px; display: flex; }
+  .left { width: 58%; display: flex; flex-direction: column; justify-content: center; }
+  .right { width: 42%; display: flex; align-items: center; justify-content: flex-end; }
+
+  .kicker { font-size: 19px; letter-spacing: 5px; text-transform: uppercase; color: #8be9fd; font-weight: 700; }
+  .word {
+    font-size: 104px; font-weight: 800; line-height: 1.0; letter-spacing: -3px; margin: 14px 0 4px;
+    background: linear-gradient(92deg, #bd93f9 0%, #ff79c6 48%, #8be9fd 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .word .plane { -webkit-text-fill-color: #f1fa8c; }
+  .tag { font-size: 30px; color: #f8f8f2; font-weight: 600; margin-top: 8px; }
+  .tag em { color: #ff79c6; font-style: normal; }
+
+  /* route line */
+  .route { margin-top: 30px; display: flex; align-items: center; gap: 14px; font: 600 20px/1 "SF Mono", Menlo, monospace; color: #6272a4; }
+  .route .ap { color: #50fa7b; }
+  .route .line { flex: 0 0 210px; height: 2px; background: repeating-linear-gradient(90deg, #6272a4 0 9px, transparent 9px 18px); position: relative; }
+  .route .line::after { content: "\2708"; position: absolute; right: -6px; top: -13px; color: #f1fa8c; font-size: 24px; }
+
+  .pills { margin-top: 34px; display: flex; gap: 10px; }
+  .pill { font: 600 16px/1 "SF Mono", Menlo, monospace; color: #f8f8f2; background: #44475a88; border: 1px solid #6272a455; padding: 9px 15px; border-radius: 999px; }
+  .pill.p { color: #bd93f9; } .pill.c { color: #8be9fd; } .pill.g { color: #50fa7b; }
+
+  /* terminal card */
+  .term { width: 430px; background: #282a36; border: 1px solid #44475a; border-radius: 14px; box-shadow: 0 30px 70px #00000066; overflow: hidden; }
+  .bar { height: 38px; background: #21222c; display: flex; align-items: center; gap: 8px; padding: 0 14px; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .r { background: #ff5555; } .y { background: #f1fa8c; } .gr { background: #50fa7b; }
+  .bar span { margin-left: 10px; color: #6272a4; font: 600 13px "SF Mono", Menlo, monospace; }
+  .body { padding: 20px 22px; font: 14px/1.85 "SF Mono", Menlo, monospace; }
+  .body .pr { color: #50fa7b; } .body .cmd { color: #f8f8f2; }
+  .body .mut { color: #6272a4; } .body .ar { color: #8be9fd; } .body .hi { color: #f1fa8c; font-weight: 700; }
+  .body .ok { color: #50fa7b; }
+</style>
+</head>
+<body>
+  <div class="grid"></div>
+  <div class="stars"><b style="left:52%;top:12%">✦</b><b style="left:90%;top:30%;font-size:13px">✦</b><b style="left:46%;top:78%;font-size:12px">✦</b><b style="left:6%;top:20%;font-size:12px">✦</b></div>
+  <div class="wrap">
+    <div class="left">
+      <div class="kicker">Know when to book</div>
+      <div class="word">flight<span class="plane">scout</span></div>
+      <div class="tag">Research flights. <em>Know when to book.</em></div>
+      <div class="route"><span class="ap">BOS</span><span class="line"></span><span class="ap">BCN</span></div>
+      <div class="pills"><span class="pill p">CLI</span><span class="pill c">MCP server</span><span class="pill g">fare watches</span></div>
+    </div>
+    <div class="right">
+      <div class="term">
+        <div class="bar"><div class="dot r"></div><div class="dot y"></div><div class="dot gr"></div><span>flightscout</span></div>
+        <div class="body">
+          <div><span class="pr">$</span> <span class="cmd">flightscout frontier \</span></div>
+          <div><span class="cmd">&nbsp;&nbsp;BOS BCN --target 2027-05-09</span></div>
+          <div class="mut">&nbsp;</div>
+          <div><span class="mut">frontier today:</span> <span class="ar">2027-04-26</span></div>
+          <div><span class="hi">2027-05-09</span> <span class="mut">opens in ~13 days</span></div>
+          <div><span class="mut">est. open:</span> <span class="ok">2026-06-14</span> <span class="ok">✓</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

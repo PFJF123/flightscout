@@ -1,5 +1,7 @@
 # flightscout
 
+![flightscout](assets/banner.png)
+
 **Research flights and know *when* to book.** flightscout is a flight-research and fare-watch toolkit built on top of [`fli`](https://github.com/punitarani/fli) (Google Flights data): round-trip and flexible search, multi-airport compare, a booking-frontier "when does my date open?" tool, and reliable availability and price watches with pluggable alerts. It runs as a CLI and as an [MCP](https://modelcontextprotocol.io) server, so an assistant can do the work for you.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -66,6 +68,9 @@ flightscout watch add price BOS BCN 2026-05-09 --threshold 450
 flightscout watch list
 flightscout watch check
 flightscout watch rm bos-bcn-2026-05-09-economy-price
+
+# Fare history + a "good time to book?" read on a watch
+flightscout history bos-bcn-2026-05-09-economy-price
 ```
 
 Add `--json` to any command to get the raw dict instead of a rendered table.
@@ -123,6 +128,8 @@ Alerts fan out to any of six notifiers, configured in a TOML file or via environ
 | `webhook`  | generic JSON POST                         |
 
 See [`examples/config.example.toml`](examples/config.example.toml) for every block and its env-var equivalent.
+
+Every check also logs the day's cheapest fare. `flightscout history <watch-id>` shows the trend and tells you where today sits versus the recent median, a simple, honest "good time to book?" read with no predictions. Watches and history live under `~/.flightscout` (override with `FLIGHTSCOUT_HOME`).
 
 ## Disclaimer
 
