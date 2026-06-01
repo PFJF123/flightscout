@@ -83,7 +83,7 @@ def search_cmd(
     )
     try:
         res = search(origin, dest, date, return_date=return_, limit=limit, **opts)
-    except FliError as e:
+    except (FliError, ValueError) as e:
         _fail(e)
     if as_json:
         _print(res.to_dict(), True)
@@ -113,7 +113,7 @@ def cheapest(
             origin, dest, date_from, date_to,
             duration=duration, round_trip=round_trip, limit=limit, **opts,
         )
-    except FliError as e:
+    except (FliError, ValueError) as e:
         _fail(e)
     if as_json:
         _print([r.to_dict() for r in rows], True)
@@ -138,7 +138,7 @@ def flexible(
     opts = _opts(cabin=cabin, stops=stops, airlines=airlines)
     try:
         rows = _flexible(origin, dest, date, window=window, **opts)
-    except FliError as e:
+    except (FliError, ValueError) as e:
         _fail(e)
     if as_json:
         _print([r.to_dict() for r in rows], True)
@@ -162,7 +162,7 @@ def compare(
     d = [x.strip() for x in dests.split(",") if x.strip()]
     try:
         res = multi_airport(o, d, date, limit=limit, cabin=cabin)
-    except FliError as e:
+    except (FliError, ValueError) as e:
         _fail(e)
     if as_json:
         _print(res.to_dict(), True)
@@ -182,7 +182,7 @@ def frontier(
     """When does a route's booking window open out to a target date?"""
     try:
         d = _frontier(origin, dest, target=target, cabin=cabin)
-    except FliError as e:
+    except (FliError, ValueError) as e:
         _fail(e)
     if as_json:
         _print(d, True)
@@ -257,7 +257,7 @@ def watch_check(
     ns = build_notifiers(load_config().get("notifiers", {}))
     try:
         report = check_watches(ns, notify=notify)
-    except FliError as e:
+    except (FliError, ValueError) as e:
         _fail(e)
     if as_json:
         _print(report, True)

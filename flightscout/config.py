@@ -11,11 +11,15 @@ Watch definitions and runtime state live under a data dir ($FLIGHTSCOUT_HOME or
 from __future__ import annotations
 
 import os
+import sys
 
 try:
     import tomllib  # py3.11+
 except ModuleNotFoundError:  # pragma: no cover
-    tomllib = None
+    try:
+        import tomli as tomllib  # backport for py3.10
+    except ModuleNotFoundError:
+        tomllib = None
 
 
 def data_home() -> str:
@@ -49,9 +53,13 @@ def load_config() -> dict:
     """Return the merged config dict. Env vars override file values for notifiers."""
     cfg: dict = {"notifiers": {}}
     path = _config_file()
-    if path and tomllib:
-        with open(path, "rb") as fh:
-            cfg.update(tomllib.load(fh))
+    if path:
+        if tomllib:
+            with open(path, "rb") as fh:
+                cfg.update(tomllib.load(fh))
+        else:
+            print(f"warning: found {path} but no TOML parser available "
+                  f"(run `pip install tomli` on Python < 3.11); using env vars only", file=sys.stderr)
     cfg.setdefault("notifiers", {})
     _apply_env_notifiers(cfg["notifiers"])
     return cfg

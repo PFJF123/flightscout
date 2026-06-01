@@ -244,7 +244,8 @@ def check_watches() -> dict:
     Returns a report dict: how many were checked, which fired, and per-watch results.
     """
     try:
-        return flightscout.check_watches(notify=False)
+        # Truly read-only: no notifications, no history write, no state persistence.
+        return flightscout.check_watches(notify=False, record_history=False, persist=False)
     except flightscout.FliError as e:
         return {"error": str(e)}
 

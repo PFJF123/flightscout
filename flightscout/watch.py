@@ -140,14 +140,20 @@ def _error_message(w: dict, st: dict) -> tuple[str, str, str]:
     return subject, html_body, body
 
 
-def check_watches(notifiers=None, *, notify: bool = False, record_history: bool = True) -> dict:
+def check_watches(notifiers=None, *, notify: bool = False, record_history: bool = True,
+                  persist: bool = True) -> dict:
     """Evaluate every active watch. Sends via `notifiers` when `notify` is True.
 
-    Returns a JSON-able report; safe to run from cron.
+    With no notifiers configured, `--notify` falls back to the console notifier so an
+    alert is never silently delivered to nobody. `persist=False` evaluates without
+    writing state/history (used by the read-only MCP tool). Safe to run from cron.
     """
     from .notifiers import send_all
 
     notifiers = notifiers or []
+    if notify and not notifiers:  # never "deliver" an alert to an empty list
+        from .notifiers.console import ConsoleNotifier
+        notifiers = [ConsoleNotifier()]
     watches = load_watches()
     state = load_state()
     fired_now: list[str] = []
@@ -198,10 +204,14 @@ def check_watches(notifiers=None, *, notify: bool = False, record_history: bool 
             fired_now.append(wid)
             if notify:
                 try:
-                    send_all(notifiers, *_fire_message(w, st.get("fire_info") or info))
-                    st["notified"] = True
-                    st["notified_at"] = _now()
-                    row["emailed"] = True
+                    results = send_all(notifiers, *_fire_message(w, st.get("fire_info") or info))
+                    delivered = [k for k, v in results.items() if v is True]
+                    if delivered:  # only latch as notified once it actually reached someone
+                        st["notified"] = True
+                        st["notified_at"] = _now()
+                        row["delivered"] = delivered
+                    else:
+                        row["notify_error"] = "no notifier delivered"
                 except Exception as e:  # noqa: BLE001
                     row["notify_error"] = str(e)
 
@@ -210,5 +220,6 @@ def check_watches(notifiers=None, *, notify: bool = False, record_history: bool 
         report.append(row)
 
     state = {k: v for k, v in state.items() if k in live}
-    save_state(state)
+    if persist:
+        save_state(state)
     return {"checked": len(report), "fired": fired_now, "results": report}

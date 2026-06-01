@@ -18,12 +18,7 @@ class ConsoleNotifier(Notifier):
     name = "console"
 
     def __init__(self, cfg: dict | None = None):
-        pass  # console takes no config; accepts cfg so the registry can call factory(cfg)
-
-    @classmethod
-    def from_config(cls, cfg: dict) -> "ConsoleNotifier":
-        return cls()
+        pass  # no config; accepts cfg so the registry can call factory(cfg)
 
     def send(self, subject: str, html: str, text: str) -> None:
-        body = text or _strip_html(html)
-        print(f"\n=== {subject} ===\n{body}\n")
+        print(f"\n=== {subject} ===\n{text or _strip_html(html)}\n")

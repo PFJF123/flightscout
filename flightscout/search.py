@@ -11,7 +11,7 @@ from __future__ import annotations
 import urllib.parse
 from datetime import datetime, timedelta
 
-from ._fli import run_fli
+from ._fli import FliError, run_fli
 from .models import DateFare, Flight, SearchResult
 
 
@@ -117,12 +117,16 @@ def multi_airport(origins: list[str], dests: list[str], date: str, *, limit: int
     """
     merged: list[Flight] = []
     pairs = [(o, d) for o in origins for d in dests]
+    failures = 0
     for o, d in pairs:
         try:
             res = search(o, d, date, limit=limit, **opts)
-        except Exception:
+        except FliError:
+            failures += 1
             continue
         merged.extend(res.flights)
+    if pairs and failures == len(pairs):  # don't report a total rate-limit as "no flights"
+        raise FliError("all airport pairs failed (rate-limited?)")
     merged.sort(key=lambda f: (f.price is None, f.price or 0))
     label = f"{'/'.join(origins)}->{'/'.join(dests)}"
     return SearchResult(
