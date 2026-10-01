@@ -52,24 +52,34 @@ def run_fli(args: list[str], *, retries: int = 2, timeout: int = 120, use_cache:
     cmd = [binpath] + args + ["--format", "json"]
     last_err = ""
     for attempt in range(retries + 1):
-        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
-        out = (proc.stdout or "").strip()
-        if out:
-            try:
-                d = json.loads(out)
-            except json.JSONDecodeError:
-                last_err = out[:300]
-            else:
-                if isinstance(d, dict):
-                    if use_cache:
-                        _CACHE[key] = (time.monotonic(), d)
-                    return d
-                last_err = f"unexpected JSON type {type(d).__name__}"
-        err = (proc.stderr or "").strip()
-        if "429" in err or "429" in last_err or "rate" in err.lower():
-            last_err = "rate-limited (429) by Google Flights"
+        try:
+            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+        except subprocess.TimeoutExpired:
+            last_err = f"timed out after {timeout} seconds"
         else:
-            last_err = err or last_err or "empty response"
+            out = (proc.stdout or "").strip()
+            if out:
+                try:
+                    d = json.loads(out)
+                except json.JSONDecodeError:
+                    last_err = out[:300]
+                else:
+                    if isinstance(d, dict):
+                        structured_err = d.get("error")
+                        if proc.returncode == 0 and d.get("success") is not False and not structured_err:
+                            if use_cache:
+                                _CACHE[key] = (time.monotonic(), d)
+                            return d
+                        last_err = str(structured_err or
+                                       ("reported success=false" if d.get("success") is False else
+                                        f"exit status {proc.returncode}"))
+                    else:
+                        last_err = f"unexpected JSON type {type(d).__name__}"
+            err = (proc.stderr or "").strip()
+            if "429" in err or "429" in last_err or "rate" in err.lower() or "rate" in last_err.lower():
+                last_err = "rate-limited (429) by Google Flights"
+            else:
+                last_err = err or last_err or "empty response"
         if attempt < retries:
             time.sleep(3 * (attempt + 1))
     raise FliError(f"fli failed: {last_err}")
