@@ -36,11 +36,11 @@ def post(url: str, data: bytes, *, headers: dict | None = None, method: str = "P
     try:
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             if resp.status >= 300:
-                raise RuntimeError(f"{url} returned HTTP {resp.status}")
+                raise RuntimeError(f"HTTP request returned HTTP {resp.status}")
     except urllib.error.HTTPError as e:
-        raise RuntimeError(f"{url} returned HTTP {e.code}: {e.reason}")
+        raise RuntimeError(f"HTTP request returned HTTP {e.code}: {e.reason}") from None
     except urllib.error.URLError as e:
-        raise RuntimeError(f"{url} unreachable: {e.reason}")
+        raise RuntimeError(f"HTTP request failed: {e.reason}") from None
 
 
 def build_notifiers(notifiers_cfg: dict) -> list[Notifier]:

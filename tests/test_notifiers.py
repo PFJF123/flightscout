@@ -1,12 +1,17 @@
 """Tests for flightscout.notifiers — registry, build_notifiers, send_all."""
 from __future__ import annotations
 
+import ssl
+import urllib.error
+
 import pytest
 
 # Importing the package populates the registry via @register.
 import flightscout.notifiers  # noqa: F401
 from flightscout.notifiers import build_notifiers, send_all
 from flightscout.notifiers.base import Notifier, _REGISTRY
+from flightscout.notifiers.base import post
+from flightscout.notifiers.email_smtp import EmailNotifier
 
 
 def test_registry_has_all_builtin_notifiers():
@@ -68,3 +73,57 @@ def test_send_all_raises_when_all_fail():
 def test_send_all_empty_list_is_noop():
     # No notifiers configured -> returns {}, does not raise.
     assert send_all([], "s", "h", "t") == {}
+
+
+def test_http_errors_do_not_expose_url_credentials(monkeypatch):
+    secret_url = "https://api.example.test/webhooks/123/TOP_SECRET_TOKEN"
+
+    def fail(request, timeout):
+        raise urllib.error.HTTPError(request.full_url, 401, "Unauthorized", {}, None)
+
+    monkeypatch.setattr("flightscout.notifiers.base.urllib.request.urlopen", fail)
+    with pytest.raises(RuntimeError) as exc_info:
+        post(secret_url, b"{}")
+
+    message = str(exc_info.value)
+    assert "TOP_SECRET_TOKEN" not in message
+    assert secret_url not in message
+    assert "HTTP 401" in message
+    assert "Unauthorized" in message
+
+
+@pytest.mark.parametrize("port", [465, 587])
+def test_smtp_tls_uses_validating_ssl_context(monkeypatch, port):
+    sentinel = object()
+    observed = {}
+
+    class FakeSMTP:
+        def __init__(self, host, actual_port, **kwargs):
+            observed["connect"] = (host, actual_port, kwargs)
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            pass
+
+        def starttls(self, **kwargs):
+            observed["starttls"] = kwargs
+
+        def login(self, username, password):
+            pass
+
+        def send_message(self, message):
+            pass
+
+    monkeypatch.setattr(ssl, "create_default_context", lambda: sentinel)
+    monkeypatch.setattr("flightscout.notifiers.email_smtp.smtplib.SMTP_SSL", FakeSMTP)
+    monkeypatch.setattr("flightscout.notifiers.email_smtp.smtplib.SMTP", FakeSMTP)
+    notifier = EmailNotifier({"host": "smtp.example", "port": port, "to_addr": "to@example.test"})
+
+    notifier.send("subject", "<p>body</p>", "body")
+
+    if port == 465:
+        assert observed["connect"][2]["context"] is sentinel
+    else:
+        assert observed["starttls"]["context"] is sentinel

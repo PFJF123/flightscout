@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import smtplib
+import ssl
 from email.message import EmailMessage
 
 from .base import Notifier, register
@@ -31,14 +32,15 @@ class EmailNotifier(Notifier):
         if html:
             msg.add_alternative(html, subtype="html")
         if self.port == 465:  # implicit SSL
-            with smtplib.SMTP_SSL(self.host, self.port, timeout=30) as s:
+            with smtplib.SMTP_SSL(self.host, self.port, timeout=30,
+                                  context=ssl.create_default_context()) as s:
                 if self.username:
                     s.login(self.username, self.password or "")
                 s.send_message(msg)
         else:
             with smtplib.SMTP(self.host, self.port, timeout=30) as s:
                 if self.use_tls:
-                    s.starttls()
+                    s.starttls(context=ssl.create_default_context())
                 if self.username:
                     s.login(self.username, self.password or "")
                 s.send_message(msg)
