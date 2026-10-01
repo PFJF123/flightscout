@@ -5,7 +5,7 @@ reliability model:
   * a watch fires ONCE, then stops being probed;
   * detection is latched in state separately from notification, so a transient
     error or notifier outage on the firing day cannot lose the alert (it retries
-    until delivery succeeds);
+    until every configured delivery succeeds);
   * N consecutive errored checks send a "watch may be broken" dead-man's-switch
     alert;
   * state writes are atomic and reads tolerate corruption.
@@ -17,7 +17,7 @@ from datetime import date, datetime
 
 from . import config, history
 from .search import book_url, search
-from .state import load_json, save_json
+from .state import file_lock, load_json, save_json
 
 ERROR_ALERT_THRESHOLD = 3
 
@@ -50,17 +50,18 @@ def add_watch(wtype: str, origin: str, dest: str, date_: str, *, cabin: str = "E
         raise ValueError("type must be 'availability' or 'price'")
     if wtype == "price" and threshold is None:
         raise ValueError("price watch requires a --threshold")
-    watches = load_watches()
     wid = watch_id or f"{origin}-{dest}-{date_}-{cabin}-{wtype}".lower()
-    if any(w["id"] == wid for w in watches):
-        raise ValueError(f"watch {wid} already exists")
     w = {
         "id": wid, "type": wtype, "origin": origin, "dest": dest, "date": date_,
         "cabin": cabin, "stops": stops, "label": label, "threshold": threshold,
         "active": True, "created": date.today().isoformat(),
     }
-    watches.append(w)
-    save_watches(watches)
+    with file_lock(config.watches_path()):
+        watches = load_watches()
+        if any(existing["id"] == wid for existing in watches):
+            raise ValueError(f"watch {wid} already exists")
+        watches.append(w)
+        save_watches(watches)
     return w
 
 
@@ -69,11 +70,12 @@ def list_watches() -> list[dict]:
 
 
 def remove_watch(wid: str) -> bool:
-    watches = load_watches()
-    new = [w for w in watches if w["id"] != wid]
-    if len(new) == len(watches):
-        return False
-    save_watches(new)
+    with file_lock(config.watches_path()):
+        watches = load_watches()
+        new = [w for w in watches if w["id"] != wid]
+        if len(new) == len(watches):
+            return False
+        save_watches(new)
     state = load_state()
     state.pop(wid, None)
     save_state(state)
@@ -85,10 +87,11 @@ def evaluate(w: dict) -> tuple[bool, dict]:
     """(fired, info). info carries 'error' on a query failure."""
     try:
         res = search(w["origin"], w["dest"], w["date"], cabin=w.get("cabin"),
-                     stops=w.get("stops"), limit=1)
+                     stops=w.get("stops"), limit=0 if w["type"] == "price" else 1)
     except Exception as e:  # noqa: BLE001
         return False, {"error": str(e)}
-    best = res.best
+    priced = [flight for flight in res.flights if flight.price is not None]
+    best = min(priced, key=lambda flight: flight.price) if w["type"] == "price" and priced else res.best
     info = {"count": res.count, "cheapest": best.to_dict() if best else None}
     if w["type"] == "availability":
         return res.count > 0, info
@@ -204,13 +207,21 @@ def check_watches(notifiers=None, *, notify: bool = False, record_history: bool 
             fired_now.append(wid)
             if notify:
                 try:
-                    results = send_all(notifiers, *_fire_message(w, st.get("fire_info") or info))
+                    already_delivered = set(st.get("delivered_notifiers", []))
+                    pending = [notifier for notifier in notifiers if notifier.name not in already_delivered]
+                    results = send_all(pending, *_fire_message(w, st.get("fire_info") or info))
                     delivered = [k for k, v in results.items() if v is True]
-                    if delivered:  # only latch as notified once it actually reached someone
+                    if delivered:
+                        already_delivered.update(delivered)
+                        st["delivered_notifiers"] = sorted(already_delivered)
+                        row["delivered"] = delivered
+                    failed = {k: v for k, v in results.items() if v is not True}
+                    if failed:
+                        row["notify_errors"] = failed
+                    if notifiers and all(notifier.name in already_delivered for notifier in notifiers):
                         st["notified"] = True
                         st["notified_at"] = _now()
-                        row["delivered"] = delivered
-                    else:
+                    elif not delivered and not failed:
                         row["notify_error"] = "no notifier delivered"
                 except Exception as e:  # noqa: BLE001
                     row["notify_error"] = str(e)

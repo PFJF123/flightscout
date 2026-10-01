@@ -5,9 +5,23 @@ truncated state file must never brick the daily watch run, so it falls back to {
 """
 from __future__ import annotations
 
+import fcntl
 import json
 import os
 import sys
+from contextlib import contextmanager
+
+
+@contextmanager
+def file_lock(path: str):
+    """Hold an exclusive advisory lock for a read-modify-write transaction."""
+    os.makedirs(os.path.dirname(os.path.abspath(path)) or ".", exist_ok=True)
+    with open(f"{path}.lock", "a") as lock_file:
+        fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
 
 
 def _atomic_write(path: str, text: str) -> None:

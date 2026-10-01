@@ -6,6 +6,7 @@ so we patch flightscout.search.run_fli to mock the fli layer.
 from __future__ import annotations
 
 import sys
+import threading
 
 import pytest
 
@@ -14,6 +15,7 @@ from flightscout.notifiers.base import Notifier
 from flightscout.state import load_json, save_json
 from flightscout import config
 import flightscout.search  # noqa: F401  (ensure submodule is imported)
+import flightscout.watch as watch_mod
 
 # flightscout.__init__ re-exports the `search` *function* onto the package, which
 # shadows the submodule attribute; grab the real module object from sys.modules.
@@ -87,6 +89,51 @@ def test_add_rejects_duplicate():
     add_watch("availability", "BOS", "BCN", "2026-10-09")
     with pytest.raises(ValueError):
         add_watch("availability", "BOS", "BCN", "2026-10-09")
+
+
+def test_concurrent_additions_do_not_overwrite_each_other(monkeypatch):
+    original_load = watch_mod.load_watches
+    first_loaded = threading.Event()
+    release_first = threading.Event()
+    second_loaded = threading.Event()
+    calls = 0
+    calls_lock = threading.Lock()
+
+    def coordinated_load():
+        nonlocal calls
+        watches = original_load()
+        with calls_lock:
+            calls += 1
+            call = calls
+        if call == 1:
+            first_loaded.set()
+            release_first.wait(timeout=2)
+        else:
+            second_loaded.set()
+        return watches
+
+    monkeypatch.setattr(watch_mod, "load_watches", coordinated_load)
+    errors = []
+
+    def add(watch_id):
+        try:
+            add_watch("availability", "BOS", "BCN", "2026-10-09", watch_id=watch_id)
+        except Exception as exc:  # pragma: no cover - asserted below
+            errors.append(exc)
+
+    first = threading.Thread(target=add, args=("watch-a",))
+    second = threading.Thread(target=add, args=("watch-b",))
+    first.start()
+    assert first_loaded.wait(timeout=1)
+    second.start()
+    entered_while_first_blocked = second_loaded.wait(timeout=0.2)
+    release_first.set()
+    first.join(timeout=2)
+    second.join(timeout=2)
+
+    assert not errors
+    assert not entered_while_first_blocked
+    assert {w["id"] for w in list_watches()} == {"watch-a", "watch-b"}
 
 
 # ---------------------------------------------------------------- fire-once
@@ -215,3 +262,45 @@ def test_price_watch_does_not_fire_above_threshold(monkeypatch):
     r = check_watches([note], notify=True)
     assert r["fired"] == []
     assert note.messages == []
+
+
+def test_price_watch_uses_cheapest_fare_not_first_result(monkeypatch):
+    response = _avail_resp(2, price=500.0)
+    response["flights"][1]["price"] = 300.0
+    monkeypatch.setattr(search_mod, "run_fli", lambda *a, **k: response)
+    note = CollectingNotifier()
+    w = add_watch("price", "BOS", "BCN", "2026-10-09", threshold=400.0)
+
+    result = check_watches([note], notify=True)
+
+    assert w["id"] in result["fired"]
+    assert len(note.messages) == 1
+    assert "at 300.0 USD" in note.messages[0][0]
+
+
+def test_partial_notifier_failure_retries_only_failed_delivery(monkeypatch):
+    class FlakyNotifier(Notifier):
+        name = "flaky"
+
+        def __init__(self):
+            self.calls = 0
+
+        def send(self, subject, html, text):
+            self.calls += 1
+            if self.calls == 1:
+                raise RuntimeError("temporary outage")
+
+    monkeypatch.setattr(search_mod, "run_fli", lambda *a, **k: _avail_resp(1))
+    working = CollectingNotifier()
+    flaky = FlakyNotifier()
+    w = add_watch("availability", "BOS", "BCN", "2026-10-09")
+
+    first = check_watches([working, flaky], notify=True)
+    assert first["results"][0]["delivered"] == ["collect"]
+    assert load_json(config.state_path(), {})[w["id"]].get("notified") is not True
+
+    second = check_watches([working, flaky], notify=True)
+    assert len(working.messages) == 1
+    assert flaky.calls == 2
+    assert second["results"][0]["delivered"] == ["flaky"]
+    assert load_json(config.state_path(), {})[w["id"]]["notified"] is True

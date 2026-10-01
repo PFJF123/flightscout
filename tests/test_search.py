@@ -143,3 +143,9 @@ def test_multi_airport_skips_failing_pair(monkeypatch):
     # BOS raised and was skipped; only PVD's flight survives.
     assert res.count == 1
     assert res.flights[0].legs[0].origin == "PVD"
+
+
+@pytest.mark.parametrize("origins,dests", [([], ["BCN"]), (["BOS"], [])])
+def test_multi_airport_rejects_empty_airport_lists(origins, dests):
+    with pytest.raises(ValueError, match="must not be empty"):
+        multi_airport(origins, dests, "2026-10-09")

@@ -115,6 +115,8 @@ def multi_airport(origins: list[str], dests: list[str], date: str, *, limit: int
 
     e.g. multi_airport(["BOS","PVD"], ["BCN"], "2026-10-09") to compare nearby airports.
     """
+    if not origins or not dests:
+        raise ValueError("origin and destination airport lists must not be empty")
     merged: list[Flight] = []
     pairs = [(o, d) for o in origins for d in dests]
     failures = 0
