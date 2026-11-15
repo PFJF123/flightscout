@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import html
 from datetime import date, datetime
+from pathlib import Path
 
 from . import config, history
 from .search import book_url, search
@@ -158,7 +159,16 @@ def check_watches(notifiers=None, *, notify: bool = False, record_history: bool 
         from .notifiers.console import ConsoleNotifier
         notifiers = [ConsoleNotifier()]
     watches = load_watches()
-    state = load_state()
+    state_path = Path(config.state_path())
+    if state_path.exists():
+        unreadable_state = object()
+        state = load_json(state_path, unreadable_state)
+        if state is unreadable_state:
+            report = [{"id": w["id"], "status": "state_error"}
+                      for w in watches if w.get("active", True)]
+            return {"checked": len(report), "fired": [], "results": report}
+    else:
+        state = {}
     fired_now: list[str] = []
     report: list[dict] = []
     live = set()
