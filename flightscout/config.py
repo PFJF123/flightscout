@@ -79,11 +79,20 @@ def _apply_env_notifiers(n: dict) -> None:
     if env.get("FLIGHTSCOUT_WEBHOOK_URL"):
         n["webhook"] = {"url": env["FLIGHTSCOUT_WEBHOOK_URL"]}
     if env.get("FLIGHTSCOUT_SMTP_HOST"):
-        n["email"] = {
-            "host": env["FLIGHTSCOUT_SMTP_HOST"],
-            "port": int(env.get("FLIGHTSCOUT_SMTP_PORT", "587")),
-            "username": env.get("FLIGHTSCOUT_SMTP_USER", ""),
-            "password": env.get("FLIGHTSCOUT_SMTP_PASS", ""),
-            "from_addr": env.get("FLIGHTSCOUT_SMTP_FROM", env.get("FLIGHTSCOUT_SMTP_USER", "")),
-            "to_addr": env.get("FLIGHTSCOUT_SMTP_TO", ""),
-        }
+        email = n.setdefault("email", {})
+        email["host"] = env["FLIGHTSCOUT_SMTP_HOST"]
+        email.setdefault("port", 587)
+        email.setdefault("username", "")
+        email.setdefault("password", "")
+        email.setdefault("from_addr", env.get("FLIGHTSCOUT_SMTP_USER", ""))
+        email.setdefault("to_addr", "")
+        if env.get("FLIGHTSCOUT_SMTP_PORT"):
+            email["port"] = int(env["FLIGHTSCOUT_SMTP_PORT"])
+        if env.get("FLIGHTSCOUT_SMTP_USER"):
+            email["username"] = env["FLIGHTSCOUT_SMTP_USER"]
+        if env.get("FLIGHTSCOUT_SMTP_PASS"):
+            email["password"] = env["FLIGHTSCOUT_SMTP_PASS"]
+        if env.get("FLIGHTSCOUT_SMTP_FROM"):
+            email["from_addr"] = env["FLIGHTSCOUT_SMTP_FROM"]
+        if env.get("FLIGHTSCOUT_SMTP_TO"):
+            email["to_addr"] = env["FLIGHTSCOUT_SMTP_TO"]
