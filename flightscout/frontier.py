@@ -65,7 +65,9 @@ def frontier(origin: str, dest: str, *, target: str | None = None, sleep: float 
     }
     if target:
         tgt = datetime.strptime(target, "%Y-%m-%d").date()
-        if tgt <= lo:
+        if tgt <= today:
+            out["target"] = {"date": target, "bookable_now": False}
+        elif tgt <= lo:
             out["target"] = {"date": target, "bookable_now": True}
         else:
             days_out = (tgt - lo).days
