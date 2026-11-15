@@ -9,8 +9,7 @@ import pytest
 # Importing the package populates the registry via @register.
 import flightscout.notifiers  # noqa: F401
 from flightscout.notifiers import build_notifiers, send_all
-from flightscout.notifiers.base import Notifier, _REGISTRY
-from flightscout.notifiers.base import post
+from flightscout.notifiers.base import _REGISTRY, Notifier, post
 from flightscout.notifiers.email_smtp import EmailNotifier
 
 

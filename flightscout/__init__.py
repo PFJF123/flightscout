@@ -18,7 +18,19 @@ from .watch import add_watch, check_watches, list_watches, remove_watch
 __version__ = "0.1.0"
 
 __all__ = [
-    "search", "cheapest_dates", "flexible", "multi_airport", "frontier",
-    "add_watch", "list_watches", "remove_watch", "check_watches",
-    "SearchResult", "Flight", "Leg", "DateFare", "FliError", "__version__",
+    "DateFare",
+    "FliError",
+    "Flight",
+    "Leg",
+    "SearchResult",
+    "__version__",
+    "add_watch",
+    "cheapest_dates",
+    "check_watches",
+    "flexible",
+    "frontier",
+    "list_watches",
+    "multi_airport",
+    "remove_watch",
+    "search",
 ]

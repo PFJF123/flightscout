@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import json
 
-from flightscout.notifiers.base import Notifier
 import flightscout.watch as watch_mod
+from flightscout.notifiers.base import Notifier
 
 
 class RecordingNotifier(Notifier):

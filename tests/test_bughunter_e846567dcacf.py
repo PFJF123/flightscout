@@ -1,6 +1,6 @@
 """Regression test for past targets being reported as bookable."""
-from datetime import date, timedelta
 import sys
+from datetime import date, timedelta
 
 import flightscout.frontier  # noqa: F401
 from flightscout.frontier import frontier

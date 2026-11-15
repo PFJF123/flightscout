@@ -8,7 +8,6 @@ where sensible and fall back to the `formatting.*` markdown for the rest.
 from __future__ import annotations
 
 import json as _json
-from typing import Optional
 
 import typer
 from rich.console import Console
@@ -17,18 +16,24 @@ from rich.table import Table
 
 from . import (
     FliError,
-    add_watch as _add_watch,
     cheapest_dates,
     check_watches,
-    flexible as _flexible,
-    frontier as _frontier,
+    formatting,
     history,
     list_watches,
     multi_airport,
     remove_watch,
     search,
 )
-from . import formatting
+from . import (
+    add_watch as _add_watch,
+)
+from . import (
+    flexible as _flexible,
+)
+from . import (
+    frontier as _frontier,
+)
 
 app = typer.Typer(add_completion=False, help="Research flights and know when to book.")
 watch_app = typer.Typer(help="Manage availability/price watches.")
@@ -63,15 +68,15 @@ def search_cmd(
     origin: str = typer.Argument(..., metavar="ORIGIN"),
     dest: str = typer.Argument(..., metavar="DEST"),
     date: str = typer.Argument(..., metavar="DATE"),
-    return_: Optional[str] = typer.Option(None, "--return", help="Return date for round-trip."),
+    return_: str | None = typer.Option(None, "--return", help="Return date for round-trip."),
     cabin: str = typer.Option("ECONOMY", "--class", help="Cabin class."),
-    stops: Optional[str] = typer.Option(None, "--stops"),
-    airlines: Optional[str] = typer.Option(None, "--airlines"),
-    alliance: Optional[str] = typer.Option(None, "--alliance"),
-    max_layover: Optional[int] = typer.Option(None, "--max-layover"),
-    bags: Optional[int] = typer.Option(None, "--bags"),
+    stops: str | None = typer.Option(None, "--stops"),
+    airlines: str | None = typer.Option(None, "--airlines"),
+    alliance: str | None = typer.Option(None, "--alliance"),
+    max_layover: int | None = typer.Option(None, "--max-layover"),
+    bags: int | None = typer.Option(None, "--bags"),
     exclude_basic: bool = typer.Option(False, "--exclude-basic"),
-    sort: Optional[str] = typer.Option(None, "--sort"),
+    sort: str | None = typer.Option(None, "--sort"),
     limit: int = typer.Option(20, "--limit"),
     as_json: bool = typer.Option(False, "--json"),
 ):
@@ -98,11 +103,11 @@ def cheapest(
     dest: str = typer.Argument(..., metavar="DEST"),
     date_from: str = typer.Option(..., "--from", help="Window start (YYYY-MM-DD)."),
     date_to: str = typer.Option(..., "--to", help="Window end (YYYY-MM-DD)."),
-    duration: Optional[int] = typer.Option(None, "--duration", help="Round-trip length in days."),
+    duration: int | None = typer.Option(None, "--duration", help="Round-trip length in days."),
     round_trip: bool = typer.Option(False, "--round"),
     cabin: str = typer.Option("ECONOMY", "--class"),
-    stops: Optional[str] = typer.Option(None, "--stops"),
-    airlines: Optional[str] = typer.Option(None, "--airlines"),
+    stops: str | None = typer.Option(None, "--stops"),
+    airlines: str | None = typer.Option(None, "--airlines"),
     limit: int = typer.Option(20, "--limit"),
     as_json: bool = typer.Option(False, "--json"),
 ):
@@ -130,8 +135,8 @@ def flexible(
     date: str = typer.Argument(..., metavar="DATE"),
     window: int = typer.Option(3, "--window", help="+/- days around DATE."),
     cabin: str = typer.Option("ECONOMY", "--class"),
-    stops: Optional[str] = typer.Option(None, "--stops"),
-    airlines: Optional[str] = typer.Option(None, "--airlines"),
+    stops: str | None = typer.Option(None, "--stops"),
+    airlines: str | None = typer.Option(None, "--airlines"),
     as_json: bool = typer.Option(False, "--json"),
 ):
     """Cheapest fare within +/- window days of DATE."""
@@ -175,7 +180,7 @@ def compare(
 def frontier(
     origin: str = typer.Argument(..., metavar="ORIGIN"),
     dest: str = typer.Argument(..., metavar="DEST"),
-    target: Optional[str] = typer.Option(None, "--target", help="Date to test for booking openness."),
+    target: str | None = typer.Option(None, "--target", help="Date to test for booking openness."),
     cabin: str = typer.Option("ECONOMY", "--class"),
     as_json: bool = typer.Option(False, "--json"),
 ):
@@ -199,7 +204,7 @@ def watch_add(
     date: str = typer.Argument(..., metavar="DATE"),
     cabin: str = typer.Option("ECONOMY", "--class"),
     stops: str = typer.Option("ANY", "--stops"),
-    threshold: Optional[float] = typer.Option(None, "--threshold", help="Price watch trigger."),
+    threshold: float | None = typer.Option(None, "--threshold", help="Price watch trigger."),
     label: str = typer.Option("", "--label"),
 ):
     """Add an availability or price watch."""
