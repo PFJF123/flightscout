@@ -53,7 +53,7 @@ def run_fli(args: list[str], *, retries: int = 2, timeout: int = 120, use_cache:
     last_err = ""
     for attempt in range(retries + 1):
         try:
-            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+            proc = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=timeout)
         except subprocess.TimeoutExpired:
             last_err = f"timed out after {timeout} seconds"
         else:

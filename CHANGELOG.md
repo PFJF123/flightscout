@@ -6,6 +6,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+- Make the local PR gate run the same lint, test and import checks as CI.
+- Resolve baseline lint and generated regression-test lint without changing behavior.
+- Keep the MCP extra on the supported v1 API used by the server.
+
+### Changed
+- Run branch CI through pull requests and main CI on pushes; cancel superseded runs.
+
 ## [0.1.0] - 2026-06-01
 
 Initial release.

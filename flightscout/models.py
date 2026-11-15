@@ -20,7 +20,7 @@ class Leg:
     duration_min: int | None
 
     @classmethod
-    def from_fli(cls, leg: dict) -> "Leg":
+    def from_fli(cls, leg: dict) -> Leg:
         air = leg.get("airline") or {}
         return cls(
             origin=(leg.get("departure_airport") or {}).get("code"),
@@ -68,7 +68,7 @@ class Flight:
         return self.legs[-1].arrive if self.legs else None
 
     @classmethod
-    def from_fli(cls, f: dict) -> "Flight":
+    def from_fli(cls, f: dict) -> Flight:
         return cls(
             price=f.get("price"),
             currency=f.get("currency", "USD"),
@@ -98,7 +98,7 @@ class DateFare:
     return_date: str | None = None
 
     @classmethod
-    def from_fli(cls, row: dict) -> "DateFare":
+    def from_fli(cls, row: dict) -> DateFare:
         return cls(
             date=row.get("departure_date"),
             price=row.get("price"),

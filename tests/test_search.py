@@ -11,8 +11,7 @@ import pytest
 
 import flightscout.search  # noqa: F401  (ensure submodule is imported)
 from flightscout import FliError
-from flightscout.search import (cheapest_dates, flexible, multi_airport,
-                                search)
+from flightscout.search import cheapest_dates, flexible, multi_airport, search
 
 search_mod = sys.modules["flightscout.search"]
 

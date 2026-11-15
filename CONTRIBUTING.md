@@ -20,8 +20,9 @@ pip install -e ".[dev,cli,mcp]"
 ## Before you open a PR
 
 ```bash
-ruff check .
-pytest -q
+python -m ruff check .
+python -m pytest -q tests
+python -c "import flightscout.cli, flightscout.mcp_server"
 ```
 
 The test suite is network-free (the `fli` calls are mocked), so it is fast and safe to run anywhere. CI runs the same checks on Python 3.10, 3.11, and 3.12; please make sure your change passes locally first.

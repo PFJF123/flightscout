@@ -10,12 +10,11 @@ import threading
 
 import pytest
 
-from flightscout import (add_watch, check_watches, list_watches, remove_watch)
-from flightscout.notifiers.base import Notifier
-from flightscout.state import load_json, save_json
-from flightscout import config
 import flightscout.search  # noqa: F401  (ensure submodule is imported)
 import flightscout.watch as watch_mod
+from flightscout import add_watch, check_watches, config, list_watches, remove_watch
+from flightscout.notifiers.base import Notifier
+from flightscout.state import load_json, save_json
 
 # flightscout.__init__ re-exports the `search` *function* onto the package, which
 # shadows the submodule attribute; grab the real module object from sys.modules.
@@ -118,7 +117,7 @@ def test_concurrent_additions_do_not_overwrite_each_other(monkeypatch):
     def add(watch_id):
         try:
             add_watch("availability", "BOS", "BCN", "2026-10-09", watch_id=watch_id)
-        except Exception as exc:  # pragma: no cover - asserted below
+        except Exception as exc:  # noqa: BLE001 - Collect all thread failures for the assertion below.
             errors.append(exc)
 
     first = threading.Thread(target=add, args=("watch-a",))

@@ -10,10 +10,10 @@ from __future__ import annotations
 import sys
 import urllib.error
 import urllib.request
-from typing import Callable
+from collections.abc import Callable
 
 # name -> factory(config_dict) -> Notifier  (a Notifier subclass is itself the factory)
-_REGISTRY: dict[str, Callable[[dict], "Notifier"]] = {}
+_REGISTRY: dict[str, Callable[[dict], Notifier]] = {}
 
 
 def register(name: str):
