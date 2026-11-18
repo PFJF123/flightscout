@@ -119,6 +119,8 @@ class SearchResult:
     flights: list[Flight] = field(default_factory=list)
     book_url: str | None = None
     return_date: str | None = None
+    incomplete: bool = False
+    failed_pairs: list[dict[str, str]] = field(default_factory=list)
 
     @property
     def bookable(self) -> bool:
@@ -137,6 +139,8 @@ class SearchResult:
             "cabin": self.cabin,
             "count": self.count,
             "bookable": self.bookable,
+            "incomplete": self.incomplete,
+            "failed_pairs": [dict(failure) for failure in self.failed_pairs],
             "best": self.best.to_dict() if self.best else None,
             "flights": [f.to_dict() for f in flights],
             "book_url": self.book_url,

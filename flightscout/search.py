@@ -119,20 +119,22 @@ def multi_airport(origins: list[str], dests: list[str], date: str, *, limit: int
         raise ValueError("origin and destination airport lists must not be empty")
     merged: list[Flight] = []
     pairs = [(o, d) for o in origins for d in dests]
-    failures = 0
+    failures: list[dict[str, str]] = []
     for o, d in pairs:
         try:
             res = search(o, d, date, limit=limit, **opts)
-        except FliError:
-            failures += 1
+        except FliError as exc:
+            failures.append({"origin": o, "dest": d, "error": str(exc)})
             continue
         merged.extend(res.flights)
-    if pairs and failures == len(pairs):  # don't report a total rate-limit as "no flights"
-        raise FliError("all airport pairs failed (rate-limited?)")
+    if pairs and len(failures) == len(pairs):  # don't report a total rate-limit as "no flights"
+        details = "; ".join(f"{f['origin']}->{f['dest']}: {f['error']}" for f in failures)
+        raise FliError(f"all airport pairs failed: {details}")
     merged.sort(key=lambda f: (f.price is None, f.price or 0))
     label = f"{'/'.join(origins)}->{'/'.join(dests)}"
     return SearchResult(
         route=label, date=date, cabin=opts.get("cabin") or "ECONOMY",
         count=len(merged), flights=merged[:limit],
+        incomplete=bool(failures), failed_pairs=failures,
         book_url=book_url(origins[0], dests[0], date),
     )
