@@ -193,14 +193,28 @@ def check_watches(notifiers=None, *, notify: bool = False, record_history: bool 
             st["last_error"] = info["error"]
             if st["error_streak"] >= ERROR_ALERT_THRESHOLD and not st.get("error_alerted") and notify:
                 try:
-                    send_all(notifiers, *_error_message(w, st))
-                    st["error_alerted"] = True
-                    row["error_escalated"] = True
+                    already_delivered = set(st.get("error_delivered_notifiers", []))
+                    pending = [notifier for notifier in notifiers if notifier.name not in already_delivered]
+                    results = send_all(pending, *_error_message(w, st))
+                    delivered = [k for k, v in results.items() if v is True]
+                    if delivered:
+                        already_delivered.update(delivered)
+                        st["error_delivered_notifiers"] = sorted(already_delivered)
+                        row["error_delivered"] = delivered
+                    failed = {k: v for k, v in results.items() if v is not True}
+                    if failed:
+                        row["escalation_errors"] = failed
+                    if notifiers and all(notifier.name in already_delivered for notifier in notifiers):
+                        st["error_alerted"] = True
+                        row["error_escalated"] = True
+                    elif not delivered and not failed:
+                        row["escalation_error"] = "no notifier delivered"
                 except Exception as e:  # noqa: BLE001
                     row["escalation_error"] = str(e)
         else:
             st["error_streak"] = 0
             st.pop("error_alerted", None)
+            st.pop("error_delivered_notifiers", None)
             st["last_count"] = info.get("count")
             price = (info.get("cheapest") or {}).get("price")
             if record_history:
