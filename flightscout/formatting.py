@@ -15,8 +15,15 @@ def _fmt_price(p, cur="USD") -> str:
 def format_search(res: SearchResult, *, limit: int = 10) -> str:
     head = f"### {res.route} · {res.date}" + (f" ↔ {res.return_date}" if res.return_date else "")
     head += f" · {res.cabin}"
+    warning = ""
+    if res.incomplete:
+        failures = "\n".join(
+            f"- {failure['origin']}->{failure['dest']}: {failure['error']}"
+            for failure in res.failed_pairs
+        )
+        warning = "**Incomplete comparison: some airport pairs failed.**\n" + failures + "\n\n"
     if not res.bookable:
-        return head + f"\n\n_Not bookable ({res.count} flights)._"
+        return head + f"\n\n{warning}_Not bookable ({res.count} flights)._"
     rows = ["| Price | Stops | Duration | Airlines | Depart → Arrive |",
             "|------|------|---------|---------|----------------|"]
     for f in res.flights[:limit]:
@@ -27,7 +34,7 @@ def format_search(res: SearchResult, *, limit: int = 10) -> str:
             f"| {f.depart or '—'} → {f.arrive or '—'} |"
         )
     tail = f"\n[Open in Google Flights]({res.book_url})" if res.book_url else ""
-    return head + f" · {res.count} flights\n\n" + "\n".join(rows) + tail
+    return head + f" · {res.count} flights\n\n" + warning + "\n".join(rows) + tail
 
 
 def format_dates(rows: list[DateFare], *, title: str = "Cheapest dates") -> str:
